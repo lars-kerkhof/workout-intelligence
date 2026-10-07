@@ -69,7 +69,7 @@ export default function Home() {
   return (
     <div className="app-shell">
       <Sidebar currentView={view} onNavigate={navigate} />
-      <main className="main-content">
+      <main className="app-main">
         {renderView()}
       </main>
       <BottomNav currentView={view} onNavigate={navigate} />

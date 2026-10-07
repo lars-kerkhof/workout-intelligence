@@ -83,6 +83,8 @@ h3 { font-size: 15px; }
 }
 
 /* ── Layout ────────────────── */
+.app-shell { display: flex; min-height: 100vh; }
+
 .sidebar {
   position: fixed; left: 0; top: 0; bottom: 0; width: var(--sidebar-w);
   background: var(--bg-raised); border-right: 1px solid var(--border-subtle);
