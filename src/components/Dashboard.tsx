@@ -115,7 +115,7 @@ export default function Dashboard({ onOpenLog, onShowDetail }: DashboardProps) {
       {/* Greeting header */}
       <div className="dash-header">
         <div>
-          <h1 className="dash-greeting">{getGreeting()}, Bas</h1>
+          <h1 className="dash-greeting">{getGreeting()}</h1>
           <p className="dash-date">{fmtDateLong()} — Week {currentWeekNum}</p>
         </div>
         <button className="btn btn-primary btn-log" onClick={onOpenLog}>
