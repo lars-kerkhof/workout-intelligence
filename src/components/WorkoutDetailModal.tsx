@@ -101,7 +101,7 @@ export default function WorkoutDetailModal({ workoutId, onClose, onDeleted }: Pr
 
             {cardio.length > 0 && (
               <div>
-                <h3 style={{ marginBottom: 8 }}>Cardio</h3>
+                <h3 style={{ marginBottom: 8 }}>{workout.category === 'running' ? 'Running' : 'Cardio'}</h3>
                 {cardio.map((c) => (
                   <div className="exercise-block" style={{ marginBottom: 8 }} key={c.id}>
                     <div style={{ fontWeight: 600 }}>{c.activity}</div>
@@ -120,7 +120,7 @@ export default function WorkoutDetailModal({ workoutId, onClose, onDeleted }: Pr
             {workout.notes && (
               <div>
                 <h3 style={{ marginBottom: 4 }}>Notes</h3>
-                <p style={{ color: 'var(--fg-dim)', fontSize: 13 }}>{workout.notes}</p>
+                <p style={{ color: 'var(--fg-dim)', fontSize: 13, whiteSpace: 'pre-line' }}>{workout.notes}</p>
               </div>
             )}
 

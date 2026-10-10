@@ -81,6 +81,7 @@ export function fmtDateLong(): string {
 // ─── Category color map ─────────
 export const CAT_COLORS: Record<string, string> = {
   strength: 'var(--cat-strength)',
+  running: 'var(--cat-running)',
   cardio: 'var(--cat-cardio)',
   cycling: 'var(--cat-cycling)',
   swimming: 'var(--cat-swimming)',
@@ -91,6 +92,7 @@ export const CAT_COLORS: Record<string, string> = {
 
 export const CAT_COLORS_HEX: Record<string, { dark: string; light: string }> = {
   strength: { dark: '#ff6a00', light: '#e05500' },
+  running: { dark: '#ec4899', light: '#db2777' },
   cardio: { dark: '#2dd4a0', light: '#059669' },
   cycling: { dark: '#38bdf8', light: '#0284c7' },
   swimming: { dark: '#818cf8', light: '#6366f1' },

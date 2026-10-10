@@ -1,5 +1,6 @@
 export type WorkoutCategory =
   | 'strength'
+  | 'running'
   | 'cardio'
   | 'cycling'
   | 'swimming'
@@ -114,7 +115,8 @@ export interface MonthlySummary {
 
 export const CATEGORIES: { id: WorkoutCategory; label: string; icon: string }[] = [
   { id: 'strength', label: 'Strength', icon: '💪' },
-  { id: 'cardio', label: 'Cardio', icon: '🏃' },
+  { id: 'running', label: 'Running', icon: '🏃' },
+  { id: 'cardio', label: 'Cardio', icon: '❤️' },
   { id: 'cycling', label: 'Cycling', icon: '🚴' },
   { id: 'swimming', label: 'Swimming', icon: '🏊' },
   { id: 'flexibility', label: 'Flexibility', icon: '🧘' },
