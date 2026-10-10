@@ -232,6 +232,233 @@ h3 { font-size: 15px; }
   justify-content: center; font-weight: 700; font-size: 12px; font-family: var(--font-display);
 }
 
+/* ── Dashboard (redesigned) ── */
+.dash-header {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 24px; gap: 16px;
+}
+.dash-greeting {
+  font-family: var(--font-display); font-weight: 800; font-size: 28px;
+  letter-spacing: -.03em; line-height: 1.1;
+}
+.dash-date {
+  color: var(--fg-dim); font-size: 14px; margin-top: 4px;
+  font-variant-numeric: tabular-nums;
+}
+.btn-log {
+  flex-shrink: 0; padding: 10px 20px; font-size: 14px; font-weight: 700;
+  border-radius: var(--radius); gap: 8px;
+}
+
+.dash-stats {
+  display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px;
+  margin-bottom: 24px;
+}
+.dash-stat-card {
+  background: var(--bg-card); border: 1px solid var(--border-subtle);
+  border-radius: var(--radius); padding: 18px 20px;
+}
+.dash-stat-label {
+  font-size: 11px; color: var(--fg-muted); text-transform: uppercase;
+  letter-spacing: .06em; font-weight: 600; margin-bottom: 8px;
+}
+.dash-stat-row {
+  display: flex; align-items: baseline; gap: 6px;
+}
+.dash-stat-value {
+  font-family: var(--font-display); font-weight: 800; font-size: 34px;
+  font-variant-numeric: tabular-nums; letter-spacing: -.02em; line-height: 1;
+}
+.dash-stat-unit {
+  font-size: 13px; color: var(--fg-dim); font-weight: 500;
+}
+.dash-stat-change {
+  font-size: 12px; color: var(--fg-dim); margin-top: 6px;
+  font-variant-numeric: tabular-nums;
+}
+.dash-stat-change.up { color: var(--success); }
+.dash-stat-change.down { color: var(--danger); }
+
+.dash-rpe-bar {
+  height: 4px; background: var(--bg-input); border-radius: 2px;
+  margin-top: 10px; overflow: hidden;
+}
+.dash-rpe-fill { height: 100%; border-radius: 2px; transition: width .4s ease; }
+
+/* Dashboard grid layouts */
+.dash-two-col {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 16px;
+  margin-bottom: 24px;
+}
+.dash-three-col {
+  display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px;
+}
+.dash-card {
+  background: var(--bg-card); border: 1px solid var(--border-subtle);
+  border-radius: var(--radius); padding: 22px 24px;
+}
+.dash-card-head {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 18px; gap: 8px;
+}
+.dash-card-head h2 { font-size: 16px; margin: 0; }
+.dash-card-sub {
+  font-size: 12px; color: var(--fg-muted); font-weight: 500;
+}
+
+/* ── Heatmap ──────────────── */
+.heatmap-wrap { display: flex; flex-direction: column; gap: 8px; }
+.heatmap-labels {
+  display: flex; flex-direction: column; gap: 4px;
+  font-size: 10px; color: var(--fg-muted); font-weight: 500;
+  position: absolute; left: 0;
+}
+.heatmap-wrap { position: relative; padding-left: 26px; }
+.heatmap-label { height: 16px; display: flex; align-items: center; }
+.heatmap-grid {
+  display: grid; grid-template-columns: repeat(12, 1fr); gap: 4px;
+}
+.heatmap-col { display: flex; flex-direction: column; gap: 4px; }
+.heatmap-cell {
+  width: 100%; aspect-ratio: 1; border-radius: 3px;
+  min-width: 12px; min-height: 12px;
+  transition: opacity .15s;
+}
+.heatmap-cell.future { opacity: .35; border: 1px dashed var(--border); background: transparent !important; }
+.heatmap-cell:hover { opacity: .8; }
+.heatmap-legend {
+  display: flex; align-items: center; gap: 4px; justify-content: flex-end;
+  font-size: 10px; color: var(--fg-muted); margin-top: 4px;
+}
+.heatmap-legend-cell {
+  width: 12px; height: 12px; border-radius: 2px;
+}
+
+/* ── Dashboard workout list ── */
+.dash-workout-list { display: flex; flex-direction: column; gap: 6px; }
+.dash-workout-row {
+  display: flex; align-items: center; gap: 14px; padding: 12px 16px;
+  background: var(--bg); border: 1px solid var(--border-subtle);
+  border-radius: var(--radius); cursor: pointer; transition: border-color .15s;
+  position: relative; overflow: hidden;
+}
+.dash-workout-row:hover { border-color: var(--border); }
+.dash-workout-cat-bar {
+  position: absolute; left: 0; top: 0; bottom: 0; width: 4px;
+  border-radius: var(--radius) 0 0 var(--radius);
+}
+.dash-workout-date {
+  display: flex; flex-direction: column; align-items: center; min-width: 44px;
+  padding-left: 8px;
+}
+.dash-workout-day {
+  font-family: var(--font-display); font-weight: 700; font-size: 22px;
+  line-height: 1; font-variant-numeric: tabular-nums;
+}
+.dash-workout-month {
+  font-size: 11px; color: var(--fg-dim); text-transform: uppercase;
+  font-weight: 600; letter-spacing: .04em;
+}
+.dash-workout-content { flex: 1; min-width: 0; }
+.dash-workout-top {
+  display: flex; align-items: center; gap: 8px; margin-bottom: 2px;
+}
+.dash-workout-title {
+  font-weight: 600; font-size: 14px;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.dash-workout-cat-tag {
+  display: inline-flex; padding: 2px 8px; border-radius: 12px;
+  font-size: 10px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: .04em; flex-shrink: 0;
+}
+.dash-workout-notes {
+  font-size: 12px; color: var(--fg-dim); margin-top: 2px;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.dash-workout-meta {
+  display: flex; align-items: center; gap: 12px; flex-shrink: 0;
+}
+.dash-workout-dur {
+  display: flex; align-items: baseline; gap: 2px;
+  font-variant-numeric: tabular-nums;
+}
+.dash-workout-dur-val {
+  font-family: var(--font-display); font-weight: 700; font-size: 16px;
+}
+.dash-workout-dur-unit {
+  font-size: 11px; color: var(--fg-dim); font-weight: 500;
+}
+.dash-workout-rpe-badge {
+  width: 36px; height: 36px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 700; font-size: 13px; font-family: var(--font-display);
+  border: 2px solid; font-variant-numeric: tabular-nums;
+}
+.dash-workout-chevron {
+  color: var(--fg-muted); flex-shrink: 0; transition: color .15s;
+}
+.dash-workout-row:hover .dash-workout-chevron { color: var(--fg-dim); }
+
+/* ── Dashboard goals ─────── */
+.dash-goals { display: flex; flex-direction: column; gap: 14px; }
+.dash-goal { display: flex; flex-direction: column; gap: 6px; }
+.dash-goal-top {
+  display: flex; align-items: center; justify-content: space-between; gap: 8px;
+}
+.dash-goal-title {
+  font-weight: 600; font-size: 13px;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.dash-goal-pct {
+  font-family: var(--font-display); font-weight: 700; font-size: 13px;
+  font-variant-numeric: tabular-nums; flex-shrink: 0;
+}
+.dash-goal-bar {
+  height: 6px; background: var(--bg-input); border-radius: 3px; overflow: hidden;
+}
+.dash-goal-fill {
+  height: 100%; border-radius: 3px; transition: width .4s ease;
+}
+.dash-goal-meta {
+  font-size: 11px; color: var(--fg-muted); font-variant-numeric: tabular-nums;
+}
+
+/* ── Dashboard PRs ────────── */
+.dash-prs { display: flex; flex-direction: column; gap: 10px; }
+.dash-pr-card {
+  display: flex; align-items: center; gap: 12px;
+  padding: 10px 0; border-bottom: 1px solid var(--border-subtle);
+}
+.dash-pr-card:last-child { border-bottom: none; }
+.dash-pr-icon {
+  width: 40px; height: 40px; border-radius: var(--radius-sm);
+  display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+}
+.dash-pr-info { flex: 1; min-width: 0; }
+.dash-pr-name {
+  font-weight: 600; font-size: 13px;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.dash-pr-date { font-size: 11px; color: var(--fg-muted); margin-top: 1px; }
+.dash-pr-value-col { text-align: right; flex-shrink: 0; }
+.dash-pr-val {
+  font-family: var(--font-display); font-weight: 700; font-size: 15px;
+  font-variant-numeric: tabular-nums;
+}
+.dash-pr-diff {
+  font-size: 11px; font-weight: 600; font-variant-numeric: tabular-nums;
+}
+
+/* ── Dashboard weight ─────── */
+.dash-weight-big {
+  font-family: var(--font-display); font-weight: 800; font-size: 38px;
+  font-variant-numeric: tabular-nums; letter-spacing: -.02em; line-height: 1;
+}
+.dash-weight-spark {
+  width: 100%; height: auto; display: block;
+}
+
 /* ── Chart wrapper ─────────── */
 .chart-wrap { position: relative; width: 100%; }
 .chart-wrap canvas { width: 100% !important; }
@@ -381,8 +608,26 @@ h3 { font-size: 15px; }
   h1 { font-size: 20px; }
   .stat-value { font-size: 24px; }
   .workout-meta { display: none; }
+
+  /* Dashboard responsive */
+  .dash-header { flex-direction: column; align-items: flex-start; gap: 12px; }
+  .dash-greeting { font-size: 22px; }
+  .btn-log { width: 100%; justify-content: center; }
+  .dash-stats { grid-template-columns: repeat(2, 1fr); }
+  .dash-stats .dash-stat-card:last-child { grid-column: span 2; }
+  .dash-stat-value { font-size: 26px; }
+  .dash-two-col { grid-template-columns: 1fr; }
+  .dash-three-col { grid-template-columns: 1fr; }
+  .dash-workout-meta { gap: 8px; }
+  .dash-workout-dur { display: none; }
+  .dash-workout-day { font-size: 18px; }
+  .heatmap-grid { gap: 3px; }
+  .heatmap-cell { min-width: 10px; min-height: 10px; }
 }
 @media (max-width: 400px) {
   .stat-grid { grid-template-columns: 1fr 1fr; }
   .rpe-row { flex-wrap: wrap; }
+  .dash-stats { grid-template-columns: 1fr; }
+  .dash-stats .dash-stat-card:last-child { grid-column: span 1; }
+  .dash-workout-notes { display: none; }
 }

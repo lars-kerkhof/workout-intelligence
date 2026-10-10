@@ -159,6 +159,34 @@ export async function fetchDistinctLocations(): Promise<string[]> {
   return [...new Set((data || []).filter((d: { location: string | null }) => d.location).map((d: { location: string | null }) => d.location as string))].sort();
 }
 
+// ─── Dashboard extras ──────────
+export async function fetchRecentPRs(limit = 3): Promise<PersonalRecord[]> {
+  const { data } = await supabase
+    .from('personal_records')
+    .select('*')
+    .order('date', { ascending: false })
+    .limit(limit);
+  return (data || []) as PersonalRecord[];
+}
+
+export async function fetchActiveGoals(): Promise<Goal[]> {
+  const { data } = await supabase
+    .from('goals')
+    .select('*')
+    .eq('status', 'active')
+    .order('deadline');
+  return (data || []) as Goal[];
+}
+
+export async function fetchRecentWeightEntries(limit = 14): Promise<WeightEntry[]> {
+  const { data } = await supabase
+    .from('weight_log')
+    .select('*')
+    .order('date', { ascending: false })
+    .limit(limit);
+  return (data || []) as WeightEntry[];
+}
+
 // ─── Progression (drill-down) ───
 export async function fetchExerciseProgression(exercise: string) {
   const { data } = await supabase

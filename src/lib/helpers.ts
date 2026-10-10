@@ -62,6 +62,22 @@ export function rpeBg(v: number): string {
   return 'var(--danger-dim)';
 }
 
+// ─── Greeting helper ───────────
+export function getGreeting(): string {
+  const h = new Date().getHours();
+  if (h < 6) return 'Goedenacht';
+  if (h < 12) return 'Goedemorgen';
+  if (h < 18) return 'Goedemiddag';
+  return 'Goedenavond';
+}
+
+export function fmtDateLong(): string {
+  const d = new Date();
+  const day = d.toLocaleDateString('nl-NL', { weekday: 'long' });
+  const rest = d.toLocaleDateString('nl-NL', { day: 'numeric', month: 'long', year: 'numeric' });
+  return day.charAt(0).toUpperCase() + day.slice(1) + ' ' + rest;
+}
+
 // ─── Category color map ─────────
 export const CAT_COLORS: Record<string, string> = {
   strength: 'var(--cat-strength)',
