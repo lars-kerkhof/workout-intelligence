@@ -56,6 +56,38 @@ export async function saveWorkout(
   return saved;
 }
 
+export async function updateWorkout(
+  id: string,
+  workout: Partial<Omit<Workout, 'id' | 'created_at' | 'updated_at'>>,
+  strengthSets?: Omit<StrengthSet, 'id' | 'workout_id'>[],
+  cardioDetail?: Omit<CardioDetail, 'id' | 'workout_id'> | null
+) {
+  const { error } = await supabase
+    .from('workouts')
+    .update({ ...workout, updated_at: new Date().toISOString() })
+    .eq('id', id);
+  if (error) throw error;
+
+  // Replace strength sets
+  if (strengthSets !== undefined) {
+    await supabase.from('strength_sets').delete().eq('workout_id', id);
+    if (strengthSets.length) {
+      const rows = strengthSets.map((s) => ({ ...s, workout_id: id }));
+      const { error: e2 } = await supabase.from('strength_sets').insert(rows);
+      if (e2) throw e2;
+    }
+  }
+
+  // Replace cardio detail
+  if (cardioDetail !== undefined) {
+    await supabase.from('cardio_details').delete().eq('workout_id', id);
+    if (cardioDetail) {
+      const { error: e3 } = await supabase.from('cardio_details').insert({ ...cardioDetail, workout_id: id });
+      if (e3) throw e3;
+    }
+  }
+}
+
 export async function deleteWorkout(id: string) {
   return supabase.from('workouts').delete().eq('id', id);
 }

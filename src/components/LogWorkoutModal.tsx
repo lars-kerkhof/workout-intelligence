@@ -3,13 +3,21 @@
 import { useState, useEffect, useCallback } from 'react';
 import type { WorkoutCategory } from '@/types/database';
 import { CATEGORIES } from '@/types/database';
-import { saveWorkout, fetchDistinctExercises, fetchDistinctActivities, fetchDistinctLocations } from '@/lib/api';
+import { saveWorkout, updateWorkout, fetchDistinctExercises, fetchDistinctActivities, fetchDistinctLocations } from '@/lib/api';
+import type { Workout, StrengthSet, CardioDetail } from '@/types/database';
 import { today } from '@/lib/helpers';
 import { CloseIcon, MinusIcon } from './Icons';
+
+export interface EditData {
+  workout: Workout;
+  sets: StrengthSet[];
+  cardio: CardioDetail[];
+}
 
 interface Props {
   onClose: () => void;
   onSaved: () => void;
+  editData?: EditData;
 }
 
 interface ExerciseBlock {
@@ -67,29 +75,67 @@ const DEFAULT_INTERVAL: IntervalConfig = {
   cooldown: '5',
 };
 
-export default function LogWorkoutModal({ onClose, onSaved }: Props) {
-  const [date, setDate] = useState(today());
-  const [category, setCategory] = useState<WorkoutCategory>('strength');
-  const [title, setTitle] = useState('');
-  const [location, setLocation] = useState('');
-  const [duration, setDuration] = useState('');
-  const [rpe, setRpe] = useState<number | null>(null);
-  const [notes, setNotes] = useState('');
+export default function LogWorkoutModal({ onClose, onSaved, editData }: Props) {
+  const isEditing = !!editData;
+
+  // ── Derive initial state from editData ──
+  function initRunType(): RunType {
+    if (!editData?.cardio.length) return 'easy';
+    const act = editData.cardio[0].activity;
+    const match = RUN_TYPES.find((rt) => rt.label === act);
+    return match?.id || 'easy';
+  }
+
+  function initPace(): string {
+    if (!editData?.cardio.length) return '';
+    const p = editData.cardio[0].avg_pace_sec_per_km;
+    if (!p) return '';
+    return `${Math.floor(p / 60)}:${String(p % 60).padStart(2, '0')}`;
+  }
+
+  function initExercises(): ExerciseBlock[] {
+    if (!editData?.sets.length) return [{ name: '', sets: [{ reps: '', weight: '' }] }];
+    const grouped: Record<string, StrengthSet[]> = {};
+    editData.sets.forEach((s) => {
+      if (!grouped[s.exercise]) grouped[s.exercise] = [];
+      grouped[s.exercise].push(s);
+    });
+    return Object.entries(grouped).map(([name, ss]) => ({
+      name,
+      sets: ss.map((s) => ({
+        reps: s.reps?.toString() || '',
+        weight: s.weight_kg?.toString() || '',
+      })),
+    }));
+  }
+
+  const [date, setDate] = useState(editData?.workout.date || today());
+  const [category, setCategory] = useState<WorkoutCategory>(editData?.workout.category || 'strength');
+  const [title, setTitle] = useState(editData?.workout.title || '');
+  const [location, setLocation] = useState(editData?.workout.location || '');
+  const [duration, setDuration] = useState(editData?.workout.duration_minutes?.toString() || '');
+  const [rpe, setRpe] = useState<number | null>(editData?.workout.rpe ?? null);
+  const [notes, setNotes] = useState(editData?.workout.notes || '');
   const [saving, setSaving] = useState(false);
 
   // Strength state
-  const [exercises, setExercises] = useState<ExerciseBlock[]>([
-    { name: '', sets: [{ reps: '', weight: '' }] },
-  ]);
+  const [exercises, setExercises] = useState<ExerciseBlock[]>(initExercises);
 
   // Cardio state (also used for running aggregate metrics)
-  const [cardio, setCardio] = useState<CardioState>({
-    activity: '', distance: '', hrAvg: '', elevation: '',
+  const [cardio, setCardio] = useState<CardioState>(() => {
+    if (!editData?.cardio.length) return { activity: '', distance: '', hrAvg: '', elevation: '' };
+    const c = editData.cardio[0];
+    return {
+      activity: editData.workout.category === 'running' ? '' : (c.activity || ''),
+      distance: c.distance_km?.toString() || '',
+      hrAvg: c.avg_heart_rate?.toString() || '',
+      elevation: c.elevation_m?.toString() || '',
+    };
   });
 
   // Running-specific state
-  const [runType, setRunType] = useState<RunType>('easy');
-  const [avgPace, setAvgPace] = useState('');
+  const [runType, setRunType] = useState<RunType>(initRunType);
+  const [avgPace, setAvgPace] = useState(initPace);
   const [interval, setInterval] = useState<IntervalConfig>(DEFAULT_INTERVAL);
 
   // Autocomplete options
@@ -295,7 +341,11 @@ export default function LogWorkoutModal({ onClose, onSaved }: Props) {
         }
       }
 
-      await saveWorkout(workout, strengthSets, cardioDetail);
+      if (isEditing && editData) {
+        await updateWorkout(editData.workout.id, workout, strengthSets, cardioDetail ?? null);
+      } else {
+        await saveWorkout(workout, strengthSets, cardioDetail);
+      }
       onSaved();
     } catch (e) {
       console.error(e);
@@ -310,7 +360,7 @@ export default function LogWorkoutModal({ onClose, onSaved }: Props) {
     <div className="modal-overlay" onClick={(e) => e.target === e.currentTarget && onClose()}>
       <div className="modal-content" style={{ maxWidth: 620 }}>
         <div className="modal-head">
-          <h2>Log Workout</h2>
+          <h2>{isEditing ? 'Edit Workout' : 'Log Workout'}</h2>
           <button className="btn-icon" onClick={onClose}><CloseIcon /></button>
         </div>
 
@@ -714,7 +764,7 @@ export default function LogWorkoutModal({ onClose, onSaved }: Props) {
         <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
           <button type="button" className="btn btn-secondary" onClick={onClose}>Cancel</button>
           <button type="button" className="btn btn-primary" onClick={handleSave} disabled={saving}>
-            {saving ? 'Saving...' : 'Save Workout'}
+            {saving ? 'Saving...' : isEditing ? 'Update Workout' : 'Save Workout'}
           </button>
         </div>
       </div>

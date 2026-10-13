@@ -5,7 +5,9 @@ import Sidebar from '@/components/Sidebar';
 import BottomNav from '@/components/BottomNav';
 import Dashboard from '@/components/Dashboard';
 import LogWorkoutModal from '@/components/LogWorkoutModal';
+import type { EditData } from '@/components/LogWorkoutModal';
 import WorkoutDetailModal from '@/components/WorkoutDetailModal';
+import type { Workout, StrengthSet, CardioDetail } from '@/types/database';
 import AnalyzeView from '@/components/AnalyzeView';
 import PRsView from '@/components/PRsView';
 import GoalsView from '@/components/GoalsView';
@@ -19,6 +21,7 @@ export default function Home() {
   const [view, setView] = useState<View>('dashboard');
   const [showLog, setShowLog] = useState(false);
   const [detailId, setDetailId] = useState<string | null>(null);
+  const [editData, setEditData] = useState<EditData | null>(null);
   const [refreshKey, setRefreshKey] = useState(0);
 
   const navigate = useCallback((target: string) => {
@@ -31,7 +34,14 @@ export default function Home() {
 
   const handleSaved = useCallback(() => {
     setShowLog(false);
+    setEditData(null);
     setRefreshKey((k) => k + 1);
+  }, []);
+
+  const handleEdit = useCallback((workout: Workout, sets: StrengthSet[], cardio: CardioDetail[]) => {
+    setDetailId(null);
+    setEditData({ workout, sets, cardio });
+    setShowLog(true);
   }, []);
 
   const handleDeleted = useCallback(() => {
@@ -75,13 +85,18 @@ export default function Home() {
       <BottomNav currentView={view} onNavigate={navigate} />
 
       {showLog && (
-        <LogWorkoutModal onClose={() => setShowLog(false)} onSaved={handleSaved} />
+        <LogWorkoutModal
+          onClose={() => { setShowLog(false); setEditData(null); }}
+          onSaved={handleSaved}
+          editData={editData || undefined}
+        />
       )}
       {detailId && (
         <WorkoutDetailModal
           workoutId={detailId}
           onClose={() => setDetailId(null)}
           onDeleted={handleDeleted}
+          onEdit={handleEdit}
         />
       )}
     </div>

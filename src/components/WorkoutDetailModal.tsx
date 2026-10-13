@@ -10,9 +10,10 @@ interface Props {
   workoutId: string;
   onClose: () => void;
   onDeleted: () => void;
+  onEdit: (workout: Workout, sets: StrengthSet[], cardio: CardioDetail[]) => void;
 }
 
-export default function WorkoutDetailModal({ workoutId, onClose, onDeleted }: Props) {
+export default function WorkoutDetailModal({ workoutId, onClose, onDeleted, onEdit }: Props) {
   const [workout, setWorkout] = useState<Workout | null>(null);
   const [sets, setSets] = useState<StrengthSet[]>([]);
   const [cardio, setCardio] = useState<CardioDetail[]>([]);
@@ -125,6 +126,12 @@ export default function WorkoutDetailModal({ workoutId, onClose, onDeleted }: Pr
             )}
 
             <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', marginTop: 8 }}>
+              <button
+                className="btn btn-secondary btn-sm"
+                onClick={() => workout && onEdit(workout, sets, cardio)}
+              >
+                ✏️ Edit
+              </button>
               {!confirmDelete ? (
                 <button className="btn btn-danger btn-sm" onClick={() => setConfirmDelete(true)}>
                   Delete
