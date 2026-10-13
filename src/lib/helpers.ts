@@ -49,6 +49,15 @@ export function fmtPace(s: number | null): string {
   return m + ':' + String(sec).padStart(2, '0') + '/km';
 }
 
+// ─── Time formatting (PRs) ──────
+export function fmtTimePR(totalSec: number): string {
+  const h = Math.floor(totalSec / 3600);
+  const m = Math.floor((totalSec % 3600) / 60);
+  const s = totalSec % 60;
+  if (h > 0) return `${h}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+  return `${m}:${String(s).padStart(2, '0')}`;
+}
+
 // ─── RPE colors ─────────────────
 export function rpeColor(v: number): string {
   if (v <= 4) return 'var(--success)';

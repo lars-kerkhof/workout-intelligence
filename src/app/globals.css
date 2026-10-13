@@ -525,6 +525,54 @@ h3 { font-size: 15px; }
 .pr-val { font-family: var(--font-display); font-weight: 700; font-size: 16px; }
 .pr-prev { font-size: 12px; color: var(--fg-muted); }
 
+/* ── PR form chips & time ───── */
+.pr-exercise-chips {
+  display: flex; gap: 6px; flex-wrap: wrap;
+}
+.pr-chip {
+  padding: 6px 14px; border-radius: 20px; border: 1px solid var(--border);
+  background: var(--bg-input); color: var(--fg-dim); font-size: 12px; font-weight: 600;
+  cursor: pointer; font-family: inherit; transition: all .15s; display: inline-flex;
+  align-items: center; gap: 5px;
+}
+.pr-chip:hover { border-color: var(--fg-muted); color: var(--fg); }
+.pr-chip.active.strength {
+  border-color: var(--cat-strength); background: rgba(255,106,0,.12);
+  color: var(--cat-strength);
+}
+.pr-chip.active.running {
+  border-color: var(--cat-running); background: rgba(236,72,153,.12);
+  color: var(--cat-running);
+}
+.pr-time-input {
+  display: flex; align-items: flex-start; gap: 4px;
+}
+.pr-time-field {
+  display: flex; flex-direction: column; align-items: center; gap: 3px;
+  flex: 1; max-width: 80px;
+}
+.pr-time-field .form-input {
+  text-align: center; font-variant-numeric: tabular-nums;
+  font-family: var(--font-display); font-weight: 600; font-size: 18px;
+  padding: 8px 6px;
+}
+.pr-time-sep {
+  font-family: var(--font-display); font-weight: 700; font-size: 20px;
+  color: var(--fg-muted); padding-top: 8px; line-height: 1;
+}
+.pr-time-label {
+  font-size: 10px; color: var(--fg-muted); font-weight: 600;
+  text-transform: uppercase; letter-spacing: .04em;
+}
+.pr-pace-display {
+  display: flex; align-items: center; gap: 8px; padding: 10px 14px;
+  background: rgba(236,72,153,.06); border: 1px solid rgba(236,72,153,.15);
+  border-radius: var(--radius-sm); font-size: 13px; color: var(--fg-dim);
+  font-variant-numeric: tabular-nums;
+}
+.pr-pace-display svg { color: var(--cat-running); flex-shrink: 0; }
+.pr-pace-display strong { color: var(--cat-running); font-weight: 700; }
+
 /* ── Weight chart area ─────── */
 .weight-entry-row { display: flex; gap: 12px; align-items: flex-end; flex-wrap: wrap; }
 .weight-entry-row .form-group { flex: 1; min-width: 120px; }
@@ -686,6 +734,8 @@ h3 { font-size: 15px; }
   .interval-tpl-chip { padding: 5px 10px; font-size: 11px; }
   .compare-grid { grid-template-columns: 1fr; }
   .modal-overlay { padding: 16px 8px; align-items: flex-start; }
+  .pr-exercise-chips { gap: 5px; }
+  .pr-chip { padding: 5px 10px; font-size: 11px; }
   h1 { font-size: 20px; }
   .stat-value { font-size: 24px; }
   .workout-meta { display: none; }
