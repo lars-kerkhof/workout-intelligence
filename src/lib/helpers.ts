@@ -11,8 +11,16 @@ export function fmtDateFull(d: string | null): string {
   return dt.toLocaleDateString('nl-NL', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' });
 }
 
+/** Format a Date as YYYY-MM-DD in local time (not UTC). */
+export function toLocalDateStr(d: Date): string {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const dd = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${dd}`;
+}
+
 export function today(): string {
-  return new Date().toISOString().slice(0, 10);
+  return toLocalDateStr(new Date());
 }
 
 export function weekStart(d: string): string {
@@ -20,7 +28,7 @@ export function weekStart(d: string): string {
   const day = dt.getDay();
   const diff = dt.getDate() - day + (day === 0 ? -6 : 1);
   dt.setDate(diff);
-  return dt.toISOString().slice(0, 10);
+  return toLocalDateStr(dt);
 }
 
 export function getISOWeek(d: Date): number {

@@ -15,6 +15,7 @@ import {
   fmtDuration,
   weekStart,
   today,
+  toLocalDateStr,
   weekLabel,
   getISOWeek,
   getGreeting,
@@ -72,7 +73,7 @@ export default function Dashboard({ onOpenLog, onShowDetail }: DashboardProps) {
   const thisWeek = weekStart(today());
   const lastWeekDate = new Date(thisWeek + 'T00:00:00');
   lastWeekDate.setDate(lastWeekDate.getDate() - 7);
-  const lastWeek = lastWeekDate.toISOString().slice(0, 10);
+  const lastWeek = toLocalDateStr(lastWeekDate);
 
   const tw = workouts.filter((w) => w.date >= thisWeek);
   const lw = workouts.filter((w) => w.date >= lastWeek && w.date < thisWeek);
@@ -502,7 +503,7 @@ function calcStreak(workouts: Workout[]): { current: number; longest: number } {
   if (!weekSet.has(thisW)) {
     const lwDate = new Date(thisW + 'T00:00:00');
     lwDate.setDate(lwDate.getDate() - 7);
-    checkWeek = lwDate.toISOString().slice(0, 10);
+    checkWeek = toLocalDateStr(lwDate);
     if (!weekSet.has(checkWeek)) {
       // No workout this or last week — streak is 0
       // But still calculate longest
@@ -516,7 +517,7 @@ function calcStreak(workouts: Workout[]): { current: number; longest: number } {
       current++;
       const d = new Date(w + 'T00:00:00');
       d.setDate(d.getDate() - 7);
-      w = d.toISOString().slice(0, 10);
+      w = toLocalDateStr(d);
     }
   }
 
@@ -567,7 +568,7 @@ function buildHeatmap(workouts: Workout[]): { date: string; count: number }[][] 
     for (let d = 0; d < 7; d++) {
       const date = new Date(startMonday);
       date.setDate(startMonday.getDate() + w * 7 + d);
-      const dateStr = date.toISOString().slice(0, 10);
+      const dateStr = toLocalDateStr(date);
       week.push({ date: dateStr, count: counts[dateStr] || 0 });
     }
     weeks.push(week);

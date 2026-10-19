@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { Line } from 'react-chartjs-2';
 import type { WeightEntry } from '@/types/database';
 import { fetchWeightLog, saveWeight } from '@/lib/api';
-import { fmtDate, today } from '@/lib/helpers';
+import { fmtDate, today, toLocalDateStr } from '@/lib/helpers';
 import { chartDefaults, getChartColors } from '@/lib/charts';
 
 export default function WeightView() {
@@ -32,7 +32,7 @@ export default function WeightView() {
   if (loading) return <div className="loading"><div className="spinner" />Loading...</div>;
 
   const latest = log[0] || null;
-  const weekAgo = log.find((w) => w.date <= new Date(Date.now() - 7 * 864e5).toISOString().slice(0, 10));
+  const weekAgo = log.find((w) => w.date <= toLocalDateStr(new Date(Date.now() - 7 * 864e5)));
   const diff = latest && weekAgo ? (latest.weight_kg - weekAgo.weight_kg).toFixed(1) : null;
 
   const chart = buildWeightChart(log);
