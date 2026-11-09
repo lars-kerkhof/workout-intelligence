@@ -733,19 +733,6 @@ h3 { font-size: 15px; }
   font-variant-numeric: tabular-nums;
 }
 .sprint-best strong { color: var(--cat-plyometrics); font-weight: 700; }
-.sprint-est { display: flex; flex-direction: column; gap: 6px; }
-.sprint-est-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; }
-.sprint-est-cell {
-  display: flex; flex-direction: column; align-items: center; gap: 2px;
-  padding: 8px 4px; border-radius: var(--radius-sm);
-  background: var(--bg-card); border: 1px solid var(--border-subtle);
-  font-variant-numeric: tabular-nums;
-}
-.sprint-est-cell strong { font-size: 14px; font-weight: 700; color: var(--fg); }
-.sprint-est-cell.measured { border-color: rgba(163,230,53,.4); background: rgba(163,230,53,.08); }
-.sprint-est-cell.measured strong { color: var(--cat-plyometrics); }
-.sprint-est-dist { font-size: 11px; color: var(--fg-muted); font-weight: 600; }
-.sprint-est-note { font-size: 12px; color: var(--fg-muted); margin: 0; }
 
 /* ── Responsive ────────────── */
 @media (max-width: 768px) {
@@ -779,7 +766,6 @@ h3 { font-size: 15px; }
   .sprint-builder { padding: 12px; }
   .sprint-grid { grid-template-columns: 20px 1fr 1fr 1fr 28px; }
   .sprint-grid .sprint-speed, .sprint-grid-head span:nth-child(5) { display: none; }
-  .sprint-est-grid { grid-template-columns: repeat(3, 1fr); }
   .compare-grid { grid-template-columns: 1fr; }
   .modal-overlay { padding: 16px 8px; align-items: flex-start; }
   .pr-exercise-chips { gap: 5px; }

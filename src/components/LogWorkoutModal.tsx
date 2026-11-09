@@ -6,7 +6,6 @@ import { CATEGORIES } from '@/types/database';
 import { saveWorkout, updateWorkout, fetchDistinctExercises, fetchDistinctActivities, fetchDistinctLocations } from '@/lib/api';
 import type { Workout, StrengthSet, CardioDetail, SprintRep, SprintVariant } from '@/types/database';
 import { today, fmtSprintTime, sprintKmh } from '@/lib/helpers';
-import SprintEstimates from './SprintEstimates';
 import { CloseIcon, MinusIcon } from './Icons';
 
 export interface EditData {
@@ -837,13 +836,6 @@ export default function LogWorkoutModal({ onClose, onSaved, editData }: Props) {
                       .join(', ')}
                   </span>
                 </div>
-              )}
-
-              {Object.keys(sessionBest).length > 0 && (
-                <SprintEstimates
-                  variant={sprintVariant}
-                  reps={sprints.map((r) => ({ distance_m: parseNum(r.distance), time_sec: parseNum(r.time) }))}
-                />
               )}
             </div>
           </div>
