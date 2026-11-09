@@ -1,32 +1,34 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import type { Workout, StrengthSet, CardioDetail } from '@/types/database';
+import type { Workout, StrengthSet, CardioDetail, SprintRep } from '@/types/database';
 import { fetchWorkoutWithDetails, deleteWorkout } from '@/lib/api';
-import { fmtDateFull, fmtDuration, fmtPace, rpeColor, rpeBg } from '@/lib/helpers';
+import { fmtDateFull, fmtDuration, fmtPace, fmtSprintTime, sprintKmh, rpeColor } from '@/lib/helpers';
 import { CloseIcon } from './Icons';
 
 interface Props {
   workoutId: string;
   onClose: () => void;
   onDeleted: () => void;
-  onEdit: (workout: Workout, sets: StrengthSet[], cardio: CardioDetail[]) => void;
+  onEdit: (workout: Workout, sets: StrengthSet[], cardio: CardioDetail[], sprints: SprintRep[]) => void;
 }
 
 export default function WorkoutDetailModal({ workoutId, onClose, onDeleted, onEdit }: Props) {
   const [workout, setWorkout] = useState<Workout | null>(null);
   const [sets, setSets] = useState<StrengthSet[]>([]);
   const [cardio, setCardio] = useState<CardioDetail[]>([]);
+  const [sprints, setSprints] = useState<SprintRep[]>([]);
   const [loading, setLoading] = useState(true);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     (async () => {
-      const { workout: w, sets: s, cardio: c } = await fetchWorkoutWithDetails(workoutId);
+      const { workout: w, sets: s, cardio: c, sprints: sp } = await fetchWorkoutWithDetails(workoutId);
       setWorkout(w);
       setSets(s);
       setCardio(c);
+      setSprints(sp);
       setLoading(false);
     })();
   }, [workoutId]);
@@ -42,6 +44,14 @@ export default function WorkoutDetailModal({ workoutId, onClose, onDeleted, onEd
   sets.forEach((s) => {
     if (!setsGrouped[s.exercise]) setsGrouped[s.exercise] = [];
     setsGrouped[s.exercise].push(s);
+  });
+
+  // Best time per sprint distance
+  const bestByDistance: Record<string, number> = {};
+  sprints.forEach((r) => {
+    if (!r.distance_m || !r.time_sec) return;
+    const k = String(r.distance_m);
+    if (!(k in bestByDistance) || r.time_sec < bestByDistance[k]) bestByDistance[k] = r.time_sec;
   });
 
   return (
@@ -83,7 +93,7 @@ export default function WorkoutDetailModal({ workoutId, onClose, onDeleted, onEd
 
             {Object.keys(setsGrouped).length > 0 && (
               <div>
-                <h3 style={{ marginBottom: 8 }}>Exercises</h3>
+                <h3 style={{ marginBottom: 8 }}>{workout.category === 'plyometrics' ? 'Plyometrics' : 'Exercises'}</h3>
                 {Object.entries(setsGrouped).map(([exercise, ss]) => (
                   <div className="exercise-block" style={{ marginBottom: 8 }} key={exercise}>
                     <div style={{ fontWeight: 600 }}>{exercise}</div>
@@ -97,6 +107,41 @@ export default function WorkoutDetailModal({ workoutId, onClose, onDeleted, onEd
                     ))}
                   </div>
                 ))}
+              </div>
+            )}
+
+            {sprints.length > 0 && (
+              <div>
+                <h3 style={{ marginBottom: 8 }}>Sprints</h3>
+                {Object.keys(bestByDistance).length > 0 && (
+                  <div className="sprint-best-row" style={{ marginBottom: 8 }}>
+                    {Object.entries(bestByDistance)
+                      .sort((a, b) => Number(a[0]) - Number(b[0]))
+                      .map(([d, t]) => (
+                        <span className="sprint-best" key={d}>
+                          {d}m <strong>{fmtSprintTime(t)}</strong>
+                        </span>
+                      ))}
+                  </div>
+                )}
+                <div className="exercise-block">
+                  {sprints.map((r) => {
+                    const isBest = !!r.distance_m && !!r.time_sec && bestByDistance[String(r.distance_m)] === r.time_sec;
+                    return (
+                      <div className="set-row" style={{ gridTemplateColumns: '28px 1fr 1fr 1fr 1fr' }} key={r.id}>
+                        <span className="set-num">{r.rep_number}</span>
+                        <span>{r.distance_m ? `${r.distance_m}m` : '-'}</span>
+                        <span style={{ fontWeight: isBest ? 700 : 400, color: isBest ? 'var(--cat-plyometrics)' : undefined }}>
+                          {fmtSprintTime(r.time_sec)}
+                        </span>
+                        <span style={{ color: 'var(--fg-dim)' }}>{sprintKmh(r.distance_m, r.time_sec) ?? '-'}</span>
+                        <span style={{ color: 'var(--fg-muted)' }}>
+                          {r.variant ? SPRINT_VARIANT_LABEL[r.variant] : ''}{r.rest_sec ? ` · ${r.rest_sec}s rust` : ''}
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
             )}
 
@@ -128,7 +173,7 @@ export default function WorkoutDetailModal({ workoutId, onClose, onDeleted, onEd
             <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', marginTop: 8 }}>
               <button
                 className="btn btn-secondary btn-sm"
-                onClick={() => workout && onEdit(workout, sets, cardio)}
+                onClick={() => workout && onEdit(workout, sets, cardio, sprints)}
               >
                 ✏️ Edit
               </button>
@@ -154,3 +199,10 @@ export default function WorkoutDetailModal({ workoutId, onClose, onDeleted, onEd
     </div>
   );
 }
+
+const SPRINT_VARIANT_LABEL: Record<string, string> = {
+  acceleration: 'Acceleratie',
+  flying: 'Flying',
+  hill: 'Heuvel',
+  resisted: 'Slee/weerstand',
+};

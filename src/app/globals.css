@@ -10,7 +10,7 @@
   --success: #2dd4a0; --success-dim: rgba(45,212,160,.12);
   --warning: #f5b731; --warning-dim: rgba(245,183,49,.12);
   --danger: #f06868; --danger-dim: rgba(240,104,104,.12);
-  --cat-strength: #ff6a00; --cat-running: #ec4899; --cat-cardio: #2dd4a0; --cat-cycling: #38bdf8;
+  --cat-strength: #ff6a00; --cat-running: #ec4899; --cat-plyometrics: #a3e635; --cat-cardio: #2dd4a0; --cat-cycling: #38bdf8;
   --cat-swimming: #818cf8; --cat-flexibility: #c084fc; --cat-sport: #f5b731; --cat-other: #8a8a8a;
   --radius: 10px; --radius-sm: 6px;
   --font-display: 'Outfit', system-ui, sans-serif;
@@ -28,7 +28,7 @@
     --success: #059669; --success-dim: rgba(5,150,105,.08);
     --warning: #d97706; --warning-dim: rgba(217,119,6,.08);
     --danger: #dc2626; --danger-dim: rgba(220,38,38,.08);
-    --cat-strength: #e05500; --cat-running: #db2777; --cat-cardio: #059669; --cat-cycling: #0284c7;
+    --cat-strength: #e05500; --cat-running: #db2777; --cat-plyometrics: #65a30d; --cat-cardio: #059669; --cat-cycling: #0284c7;
     --cat-swimming: #6366f1; --cat-flexibility: #9333ea; --cat-sport: #d97706; --cat-other: #6b6b6b;
     color-scheme: light;
   }
@@ -42,7 +42,7 @@
   --success: #2dd4a0; --success-dim: rgba(45,212,160,.12);
   --warning: #f5b731; --warning-dim: rgba(245,183,49,.12);
   --danger: #f06868; --danger-dim: rgba(240,104,104,.12);
-  --cat-strength: #ff6a00; --cat-running: #ec4899; --cat-cardio: #2dd4a0; --cat-cycling: #38bdf8;
+  --cat-strength: #ff6a00; --cat-running: #ec4899; --cat-plyometrics: #a3e635; --cat-cardio: #2dd4a0; --cat-cycling: #38bdf8;
   --cat-swimming: #818cf8; --cat-flexibility: #c084fc; --cat-sport: #f5b731; --cat-other: #8a8a8a;
   color-scheme: dark;
 }
@@ -201,6 +201,7 @@ h3 { font-size: 15px; }
 }
 .cat-strength { background: rgba(255,106,0,.12); color: var(--cat-strength); }
 .cat-running { background: rgba(236,72,153,.12); color: var(--cat-running); }
+.cat-plyometrics { background: rgba(163,230,53,.12); color: var(--cat-plyometrics); }
 .cat-cardio { background: rgba(45,212,160,.12); color: var(--cat-cardio); }
 .cat-cycling { background: rgba(56,189,248,.12); color: var(--cat-cycling); }
 .cat-swimming { background: rgba(129,140,248,.12); color: var(--cat-swimming); }
@@ -703,6 +704,36 @@ h3 { font-size: 15px; }
   text-transform: uppercase; letter-spacing: .04em;
 }
 
+/* ── Plyo / Sprints ────────── */
+.run-type-chip.plyo.active,
+.interval-tpl-chip.plyo.active {
+  border-color: var(--cat-plyometrics); background: rgba(163,230,53,.12);
+  color: var(--cat-plyometrics);
+}
+.interval-tpl-chip.plyo:hover { border-color: var(--cat-plyometrics); color: var(--cat-plyometrics); }
+.sprint-builder {
+  background: var(--bg); border: 1px solid var(--border-subtle);
+  border-radius: var(--radius); padding: 18px;
+  display: flex; flex-direction: column; gap: 10px;
+}
+.sprint-grid {
+  display: grid; grid-template-columns: 24px 1fr 1fr 1fr 76px 28px;
+  gap: 6px; align-items: center; font-variant-numeric: tabular-nums;
+}
+.sprint-grid .form-input { padding: 6px 8px; min-width: 0; }
+.sprint-grid-head { font-size: 11px; color: var(--fg-muted); padding: 0 2px; }
+.sprint-speed { font-size: 12px; color: var(--fg-dim); white-space: nowrap; }
+.sprint-best-input { border-color: var(--cat-plyometrics); color: var(--cat-plyometrics); font-weight: 700; }
+.interval-summary.plyo { background: rgba(163,230,53,.06); border-color: rgba(163,230,53,.2); }
+.interval-summary.plyo strong { color: var(--cat-plyometrics); }
+.sprint-best-row { display: flex; gap: 6px; flex-wrap: wrap; }
+.sprint-best {
+  padding: 4px 10px; border-radius: 14px; font-size: 12px; color: var(--fg-dim);
+  background: rgba(163,230,53,.08); border: 1px solid rgba(163,230,53,.2);
+  font-variant-numeric: tabular-nums;
+}
+.sprint-best strong { color: var(--cat-plyometrics); font-weight: 700; }
+
 /* ── Responsive ────────────── */
 @media (max-width: 768px) {
   .sidebar { display: none; }
@@ -732,6 +763,9 @@ h3 { font-size: 15px; }
   .interval-config-full { grid-template-columns: 1fr; }
   .interval-templates { gap: 6px; }
   .interval-tpl-chip { padding: 5px 10px; font-size: 11px; }
+  .sprint-builder { padding: 12px; }
+  .sprint-grid { grid-template-columns: 20px 1fr 1fr 1fr 28px; }
+  .sprint-grid .sprint-speed, .sprint-grid-head span:nth-child(5) { display: none; }
   .compare-grid { grid-template-columns: 1fr; }
   .modal-overlay { padding: 16px 8px; align-items: flex-start; }
   .pr-exercise-chips { gap: 5px; }

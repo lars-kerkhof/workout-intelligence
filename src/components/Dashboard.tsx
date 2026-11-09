@@ -32,6 +32,7 @@ interface DashboardProps {
 const CAT_LABELS: Record<string, string> = {
   strength: 'Kracht',
   running: 'Hardlopen',
+  plyometrics: 'Plyo / Sprints',
   cardio: 'Cardio',
   cycling: 'Fietsen',
   swimming: 'Zwemmen',
@@ -588,7 +589,7 @@ function buildWeeklyChart(weekly: WeeklySummary[]) {
 
   const weekKeys = Object.keys(weeks).sort().slice(-8);
   const labels = weekKeys.map((d) => weekLabel(d));
-  const cats = ['strength', 'running', 'cardio', 'cycling', 'swimming', 'flexibility', 'sport', 'other'];
+  const cats = ['strength', 'running', 'plyometrics', 'cardio', 'cycling', 'swimming', 'flexibility', 'sport', 'other'];
   const currentWeekLabel = 'W' + getISOWeek(new Date());
 
   const datasets = cats

@@ -169,7 +169,7 @@ function buildWeeklyVolumeChart(weekly: WeeklySummary[]) {
   });
   const weekKeys = Object.keys(weeks).sort().slice(-8);
   const labels = weekKeys.map((d) => weekLabel(d));
-  const cats = ['strength', 'cardio', 'cycling', 'swimming', 'flexibility', 'sport', 'other'];
+  const cats = ['strength', 'running', 'plyometrics', 'cardio', 'cycling', 'swimming', 'flexibility', 'sport', 'other'];
   const datasets = cats
     .filter((c) => weekKeys.some((w) => weeks[w][c]))
     .map((c) => ({
@@ -247,7 +247,7 @@ function buildMonthlyChart(monthly: MonthlySummary[]) {
     const dt = new Date(d + 'T00:00:00');
     return dt.toLocaleDateString('nl-NL', { month: 'short', year: '2-digit' });
   });
-  const cats = ['strength', 'cardio', 'cycling', 'swimming', 'flexibility', 'sport', 'other'];
+  const cats = ['strength', 'running', 'plyometrics', 'cardio', 'cycling', 'swimming', 'flexibility', 'sport', 'other'];
   const datasets = cats
     .filter((c) => sorted.some((m) => months[m][c]))
     .map((c) => ({

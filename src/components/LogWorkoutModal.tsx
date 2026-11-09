@@ -4,14 +4,15 @@ import { useState, useEffect, useCallback } from 'react';
 import type { WorkoutCategory } from '@/types/database';
 import { CATEGORIES } from '@/types/database';
 import { saveWorkout, updateWorkout, fetchDistinctExercises, fetchDistinctActivities, fetchDistinctLocations } from '@/lib/api';
-import type { Workout, StrengthSet, CardioDetail } from '@/types/database';
-import { today } from '@/lib/helpers';
+import type { Workout, StrengthSet, CardioDetail, SprintRep, SprintVariant } from '@/types/database';
+import { today, fmtSprintTime, sprintKmh } from '@/lib/helpers';
 import { CloseIcon, MinusIcon } from './Icons';
 
 export interface EditData {
   workout: Workout;
   sets: StrengthSet[];
   cardio: CardioDetail[];
+  sprints?: SprintRep[];
 }
 
 interface Props {
@@ -62,6 +63,27 @@ const INTERVAL_TEMPLATES: { id: string; name: string; desc: string; config: Omit
   { id: '5x1000', name: '5× 1000m', desc: '5× 3:30 / 2:00 rust', config: { warmup: '10', repeats: '5', workMin: '3', workSec: '30', restMin: '2', restSec: '0', cooldown: '5' } },
   { id: 'yasso800', name: 'Yasso 800s', desc: '10× 3:00 / 3:00 rust', config: { warmup: '15', repeats: '10', workMin: '3', workSec: '0', restMin: '3', restSec: '0', cooldown: '10' } },
   { id: '6x800', name: '6× 800m', desc: '6× 2:45 / 2:00 rust', config: { warmup: '10', repeats: '6', workMin: '2', workSec: '45', restMin: '2', restSec: '0', cooldown: '5' } },
+];
+
+// ── Plyo / Sprint types ──
+interface SprintRow {
+  distance: string; // meters
+  time: string;     // seconds, e.g. "4.32"
+  rest: string;     // seconds
+}
+
+const SPRINT_VARIANTS: { id: SprintVariant; label: string; icon: string }[] = [
+  { id: 'acceleration', label: 'Acceleratie', icon: '🚀' },
+  { id: 'flying', label: 'Flying', icon: '💨' },
+  { id: 'hill', label: 'Heuvel', icon: '⛰️' },
+  { id: 'resisted', label: 'Slee / weerstand', icon: '🛷' },
+];
+
+const SPRINT_DISTANCES = [10, 20, 30, 40, 60, 100, 150, 200];
+
+const PLYO_SUGGESTIONS = [
+  'Box Jumps', 'Broad Jumps', 'Depth Jumps', 'Drop Jumps', 'Bounds',
+  'Pogo Hops', 'Tuck Jumps', 'Single-Leg Hops', 'Skater Jumps', 'Med Ball Throws',
 ];
 
 const DEFAULT_INTERVAL: IntervalConfig = {
@@ -138,6 +160,20 @@ export default function LogWorkoutModal({ onClose, onSaved, editData }: Props) {
   const [avgPace, setAvgPace] = useState(initPace);
   const [interval, setInterval] = useState<IntervalConfig>(DEFAULT_INTERVAL);
 
+  // Plyo / Sprint state
+  const [sprintVariant, setSprintVariant] = useState<SprintVariant>(
+    () => editData?.sprints?.find((r) => r.variant)?.variant || 'acceleration'
+  );
+  const [sprints, setSprints] = useState<SprintRow[]>(() =>
+    editData?.sprints?.length
+      ? editData.sprints.map((r) => ({
+          distance: r.distance_m?.toString() || '',
+          time: r.time_sec?.toString() || '',
+          rest: r.rest_sec?.toString() || '',
+        }))
+      : []
+  );
+
   // Autocomplete options
   const [exerciseOptions, setExerciseOptions] = useState<string[]>([]);
   const [activityOptions, setActivityOptions] = useState<string[]>([]);
@@ -183,6 +219,43 @@ export default function LogWorkoutModal({ onClose, onSaved, editData }: Props) {
   const removeExercise = useCallback((i: number) => {
     setExercises((prev) => prev.filter((_, idx) => idx !== i));
   }, []);
+
+  // ── Sprint helpers ──
+  function addSprint(distance?: number) {
+    setSprints((prev) => {
+      const last = prev[prev.length - 1];
+      return [...prev, {
+        distance: distance !== undefined ? String(distance) : (last?.distance || '30'),
+        time: '',
+        rest: last?.rest || '120',
+      }];
+    });
+  }
+
+  function updateSprint(i: number, field: keyof SprintRow, val: string) {
+    setSprints((prev) => prev.map((r, idx) => (idx === i ? { ...r, [field]: val } : r)));
+  }
+
+  function removeSprint(i: number) {
+    setSprints((prev) => prev.filter((_, idx) => idx !== i));
+  }
+
+  function parseNum(v: string): number | null {
+    const n = parseFloat(v.replace(',', '.'));
+    return Number.isFinite(n) && n > 0 ? n : null;
+  }
+
+  function sprintSummary(): string {
+    const counts: Record<string, number> = {};
+    sprints.forEach((r) => {
+      const d = parseNum(r.distance);
+      if (d) counts[d] = (counts[d] || 0) + 1;
+    });
+    return Object.entries(counts)
+      .sort((a, b) => Number(a[0]) - Number(b[0]))
+      .map(([d, n]) => `${n}× ${d}m`)
+      .join(' + ');
+  }
 
   // ── Interval helpers ──
   function applyTemplate(tplId: string) {
@@ -283,6 +356,12 @@ export default function LogWorkoutModal({ onClose, onSaved, editData }: Props) {
           } else {
             autoTitle = rt?.label || 'Run';
           }
+        } else if (category === 'plyometrics') {
+          const summary = sprintSummary();
+          const hasPlyo = exercises.some((ex) => ex.name);
+          autoTitle = summary
+            ? `Sprints ${summary}${hasPlyo ? ' + plyo' : ''}`
+            : hasPlyo ? 'Plyometrics' : 'Plyo / Sprints';
         } else {
           autoTitle = category;
         }
@@ -301,7 +380,9 @@ export default function LogWorkoutModal({ onClose, onSaved, editData }: Props) {
       let strengthSets: { exercise: string; set_number: number; reps: number | null; weight_kg: number | null; rpe: number | null }[] | undefined;
       let cardioDetail: { activity: string; distance_km: number | null; duration_minutes: number | null; avg_heart_rate: number | null; max_heart_rate: number | null; avg_pace_sec_per_km: number | null; elevation_m: number | null } | undefined;
 
-      if (category === 'strength') {
+      let sprintReps: Omit<SprintRep, 'id' | 'workout_id'>[] | undefined;
+
+      if (category === 'strength' || category === 'plyometrics') {
         strengthSets = [];
         exercises.forEach((ex) => {
           if (!ex.name) return;
@@ -315,6 +396,17 @@ export default function LogWorkoutModal({ onClose, onSaved, editData }: Props) {
             });
           });
         });
+        if (category === 'plyometrics') {
+          sprintReps = sprints
+            .filter((r) => parseNum(r.distance) || parseNum(r.time))
+            .map((r, i) => ({
+              rep_number: i + 1,
+              variant: sprintVariant,
+              distance_m: parseNum(r.distance),
+              time_sec: parseNum(r.time),
+              rest_sec: parseNum(r.rest) ? Math.round(parseNum(r.rest)!) : null,
+            }));
+        }
       } else if (['running', 'cardio', 'cycling', 'swimming'].includes(category)) {
         const act = category === 'running'
           ? (RUN_TYPES.find((t) => t.id === runType)?.label || 'Run')
@@ -342,9 +434,9 @@ export default function LogWorkoutModal({ onClose, onSaved, editData }: Props) {
       }
 
       if (isEditing && editData) {
-        await updateWorkout(editData.workout.id, workout, strengthSets, cardioDetail ?? null);
+        await updateWorkout(editData.workout.id, workout, strengthSets, cardioDetail ?? null, sprintReps ?? (editData.sprints?.length ? [] : undefined));
       } else {
-        await saveWorkout(workout, strengthSets, cardioDetail);
+        await saveWorkout(workout, strengthSets, cardioDetail, sprintReps);
       }
       onSaved();
     } catch (e) {
@@ -355,6 +447,17 @@ export default function LogWorkoutModal({ onClose, onSaved, editData }: Props) {
 
   const isCardioType = ['cardio', 'cycling', 'swimming'].includes(category);
   const isRunning = category === 'running';
+  const isPlyo = category === 'plyometrics';
+  const showExercises = category === 'strength' || isPlyo;
+
+  // Best time per distance in the current session (for highlighting)
+  const sessionBest: Record<string, number> = {};
+  sprints.forEach((r) => {
+    const d = parseNum(r.distance);
+    const t = parseNum(r.time);
+    if (!d || !t) return;
+    if (!(d in sessionBest) || t < sessionBest[d]) sessionBest[d] = t;
+  });
 
   return (
     <div className="modal-overlay" onClick={(e) => e.target === e.currentTarget && onClose()}>
@@ -391,6 +494,8 @@ export default function LogWorkoutModal({ onClose, onSaved, editData }: Props) {
             onChange={(e) => setTitle(e.target.value)}
             placeholder={isRunning
               ? 'e.g. Norwegian 4×4, Morning Run...'
+              : isPlyo
+              ? 'Leeg = automatisch, bv. "Sprints 6× 30m"'
               : 'e.g. Upper Body, Morning Run, Bike Ride...'}
           />
         </div>
@@ -402,7 +507,7 @@ export default function LogWorkoutModal({ onClose, onSaved, editData }: Props) {
               className="form-input"
               value={location}
               onChange={(e) => setLocation(e.target.value)}
-              placeholder={isRunning ? 'e.g. Vondelpark' : 'e.g. Basic-Fit Arena'}
+              placeholder={isRunning ? 'e.g. Vondelpark' : isPlyo ? 'e.g. Atletiekbaan' : 'e.g. Basic-Fit Arena'}
               list="loc-list"
             />
             <datalist id="loc-list">
@@ -636,16 +741,116 @@ export default function LogWorkoutModal({ onClose, onSaved, editData }: Props) {
           </div>
         )}
 
-        {/* ── Strength Section ── */}
-        {category === 'strength' && (
+        {/* ── Sprint Section (plyo) ── */}
+        {isPlyo && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+            <h3>Sprints</h3>
+
+            <div className="form-group">
+              <label className="form-label">Type sprint</label>
+              <div className="run-type-row">
+                {SPRINT_VARIANTS.map((v) => (
+                  <button
+                    key={v.id}
+                    type="button"
+                    className={`run-type-chip plyo${sprintVariant === v.id ? ' active' : ''}`}
+                    onClick={() => setSprintVariant(v.id)}
+                  >
+                    <span>{v.icon}</span>
+                    {v.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="sprint-builder">
+              <div className="form-group">
+                <label className="interval-label">Snel toevoegen</label>
+                <div className="interval-templates">
+                  {SPRINT_DISTANCES.map((d) => (
+                    <button key={d} type="button" className="interval-tpl-chip plyo" onClick={() => addSprint(d)}>
+                      + {d}m
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {sprints.length > 0 && (
+                <>
+                  <div className="sprint-grid sprint-grid-head">
+                    <span>#</span><span>Afstand (m)</span><span>Tijd (s)</span><span>Rust (s)</span><span>Snelheid</span><span />
+                  </div>
+                  {sprints.map((r, i) => {
+                    const d = parseNum(r.distance);
+                    const t = parseNum(r.time);
+                    const isBest = !!d && !!t && sessionBest[d] === t && sprints.filter((x) => parseNum(x.distance) === d).length > 1;
+                    return (
+                      <div className="sprint-grid" key={i}>
+                        <span className="set-num">{i + 1}</span>
+                        <input
+                          type="number"
+                          className="form-input"
+                          value={r.distance}
+                          placeholder="30"
+                          onChange={(e) => updateSprint(i, 'distance', e.target.value)}
+                        />
+                        <input
+                          type="number"
+                          inputMode="decimal"
+                          step="0.01"
+                          className={`form-input${isBest ? ' sprint-best-input' : ''}`}
+                          value={r.time}
+                          placeholder="4.25"
+                          onChange={(e) => updateSprint(i, 'time', e.target.value)}
+                        />
+                        <input
+                          type="number"
+                          className="form-input"
+                          value={r.rest}
+                          placeholder="120"
+                          onChange={(e) => updateSprint(i, 'rest', e.target.value)}
+                        />
+                        <span className="sprint-speed">{sprintKmh(d, t) ?? '–'}</span>
+                        <button type="button" className="btn-icon" onClick={() => removeSprint(i)} style={{ padding: 4 }}>
+                          <MinusIcon />
+                        </button>
+                      </div>
+                    );
+                  })}
+                </>
+              )}
+
+              <button type="button" className="btn btn-secondary btn-sm" onClick={() => addSprint()}>
+                + Sprint
+              </button>
+
+              {Object.keys(sessionBest).length > 0 && (
+                <div className="interval-summary plyo">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+                  <span>
+                    <strong>{sprintSummary()}</strong>
+                    {' · beste: '}
+                    {Object.entries(sessionBest)
+                      .sort((a, b) => Number(a[0]) - Number(b[0]))
+                      .map(([dist, t]) => `${dist}m ${fmtSprintTime(t)}`)
+                      .join(', ')}
+                  </span>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* ── Strength / Plyo exercises Section ── */}
+        {showExercises && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-            <h3>Exercises</h3>
+            <h3>{isPlyo ? 'Plyometrics' : 'Exercises'}</h3>
             {exercises.map((ex, i) => (
               <div className="exercise-block" key={i}>
                 <div className="exercise-header">
                   <input
                     className="form-input"
-                    placeholder="Exercise name"
+                    placeholder={isPlyo ? 'bv. Box Jumps' : 'Exercise name'}
                     value={ex.name}
                     onChange={(e) => updateExerciseName(i, e.target.value)}
                     list="ex-list"
@@ -657,7 +862,7 @@ export default function LogWorkoutModal({ onClose, onSaved, editData }: Props) {
                   )}
                 </div>
                 <div style={{ display: 'grid', gridTemplateColumns: '40px 1fr 1fr', gap: 6, fontSize: 11, color: 'var(--fg-muted)', padding: '0 2px' }}>
-                  <span>Set</span><span>Reps</span><span>Weight (kg)</span>
+                  <span>Set</span><span>{isPlyo ? 'Reps / contacts' : 'Reps'}</span><span>{isPlyo ? 'Extra gewicht (kg)' : 'Weight (kg)'}</span>
                 </div>
                 {ex.sets.map((s, j) => (
                   <div className="set-row" style={{ gridTemplateColumns: '40px 1fr 1fr auto' }} key={j}>
@@ -666,7 +871,7 @@ export default function LogWorkoutModal({ onClose, onSaved, editData }: Props) {
                       type="number"
                       className="form-input"
                       value={s.reps}
-                      placeholder="8"
+                      placeholder={isPlyo ? '5' : '8'}
                       onChange={(e) => updateSet(i, j, 'reps', e.target.value)}
                       style={{ padding: '6px 8px' }}
                     />
@@ -674,7 +879,7 @@ export default function LogWorkoutModal({ onClose, onSaved, editData }: Props) {
                       type="number"
                       className="form-input"
                       value={s.weight}
-                      placeholder="80"
+                      placeholder={isPlyo ? '0' : '80'}
                       step="0.5"
                       onChange={(e) => updateSet(i, j, 'weight', e.target.value)}
                       style={{ padding: '6px 8px' }}
@@ -689,9 +894,9 @@ export default function LogWorkoutModal({ onClose, onSaved, editData }: Props) {
                 <button type="button" className="btn btn-secondary btn-sm" onClick={() => addSet(i)}>+ Set</button>
               </div>
             ))}
-            <button type="button" className="btn btn-secondary" onClick={addExercise}>+ Add Exercise</button>
+            <button type="button" className="btn btn-secondary" onClick={addExercise}>{isPlyo ? '+ Plyo-oefening' : '+ Add Exercise'}</button>
             <datalist id="ex-list">
-              {exerciseOptions.map((e) => <option key={e} value={e} />)}
+              {(isPlyo ? [...new Set([...PLYO_SUGGESTIONS, ...exerciseOptions])] : exerciseOptions).map((e) => <option key={e} value={e} />)}
             </datalist>
           </div>
         )}

@@ -3,6 +3,7 @@ import type {
   Workout,
   StrengthSet,
   CardioDetail,
+  SprintRep,
   WeightEntry,
   PersonalRecord,
   Goal,
@@ -23,22 +24,25 @@ export async function fetchWorkouts(limit = 50): Promise<Workout[]> {
 }
 
 export async function fetchWorkoutWithDetails(id: string) {
-  const [w, s, c] = await Promise.all([
+  const [w, s, c, sp] = await Promise.all([
     supabase.from('workouts').select('*').eq('id', id).single(),
     supabase.from('strength_sets').select('*').eq('workout_id', id).order('exercise').order('set_number'),
     supabase.from('cardio_details').select('*').eq('workout_id', id),
+    supabase.from('sprint_reps').select('*').eq('workout_id', id).order('rep_number'),
   ]);
   return {
     workout: w.data as Workout | null,
     sets: (s.data || []) as StrengthSet[],
     cardio: (c.data || []) as CardioDetail[],
+    sprints: (sp.data || []) as SprintRep[],
   };
 }
 
 export async function saveWorkout(
   workout: Omit<Workout, 'id' | 'created_at' | 'updated_at'>,
   strengthSets?: Omit<StrengthSet, 'id' | 'workout_id'>[],
-  cardioDetail?: Omit<CardioDetail, 'id' | 'workout_id'>
+  cardioDetail?: Omit<CardioDetail, 'id' | 'workout_id'>,
+  sprints?: Omit<SprintRep, 'id' | 'workout_id'>[]
 ) {
   const { data: w, error } = await supabase.from('workouts').insert(workout).select().single();
   if (error) throw error;
@@ -53,6 +57,11 @@ export async function saveWorkout(
     const { error: e3 } = await supabase.from('cardio_details').insert({ ...cardioDetail, workout_id: saved.id });
     if (e3) throw e3;
   }
+  if (sprints && sprints.length) {
+    const rows = sprints.map((r) => ({ ...r, workout_id: saved.id }));
+    const { error: e4 } = await supabase.from('sprint_reps').insert(rows);
+    if (e4) throw e4;
+  }
   return saved;
 }
 
@@ -60,7 +69,8 @@ export async function updateWorkout(
   id: string,
   workout: Partial<Omit<Workout, 'id' | 'created_at' | 'updated_at'>>,
   strengthSets?: Omit<StrengthSet, 'id' | 'workout_id'>[],
-  cardioDetail?: Omit<CardioDetail, 'id' | 'workout_id'> | null
+  cardioDetail?: Omit<CardioDetail, 'id' | 'workout_id'> | null,
+  sprints?: Omit<SprintRep, 'id' | 'workout_id'>[]
 ) {
   const { error } = await supabase
     .from('workouts')
@@ -84,6 +94,16 @@ export async function updateWorkout(
     if (cardioDetail) {
       const { error: e3 } = await supabase.from('cardio_details').insert({ ...cardioDetail, workout_id: id });
       if (e3) throw e3;
+    }
+  }
+
+  // Replace sprint reps
+  if (sprints !== undefined) {
+    await supabase.from('sprint_reps').delete().eq('workout_id', id);
+    if (sprints.length) {
+      const rows = sprints.map((r) => ({ ...r, workout_id: id }));
+      const { error: e4 } = await supabase.from('sprint_reps').insert(rows);
+      if (e4) throw e4;
     }
   }
 }

@@ -57,6 +57,20 @@ export function fmtPace(s: number | null): string {
   return m + ':' + String(sec).padStart(2, '0') + '/km';
 }
 
+// ─── Sprint formatting ──────────
+export function fmtSprintTime(sec: number | null): string {
+  if (!sec) return '-';
+  if (sec < 60) return sec.toFixed(2) + 's';
+  const m = Math.floor(sec / 60);
+  return `${m}:${(sec - m * 60).toFixed(2).padStart(5, '0')}`;
+}
+
+/** Average speed in km/h for a sprint rep, e.g. "25.7 km/u". */
+export function sprintKmh(distanceM: number | null, timeSec: number | null): string | null {
+  if (!distanceM || !timeSec) return null;
+  return ((distanceM / timeSec) * 3.6).toFixed(1) + ' km/u';
+}
+
 // ─── Time formatting (PRs) ──────
 export function fmtTimePR(totalSec: number): string {
   const h = Math.floor(totalSec / 3600);
@@ -99,6 +113,7 @@ export function fmtDateLong(): string {
 export const CAT_COLORS: Record<string, string> = {
   strength: 'var(--cat-strength)',
   running: 'var(--cat-running)',
+  plyometrics: 'var(--cat-plyometrics)',
   cardio: 'var(--cat-cardio)',
   cycling: 'var(--cat-cycling)',
   swimming: 'var(--cat-swimming)',
@@ -110,6 +125,7 @@ export const CAT_COLORS: Record<string, string> = {
 export const CAT_COLORS_HEX: Record<string, { dark: string; light: string }> = {
   strength: { dark: '#ff6a00', light: '#e05500' },
   running: { dark: '#ec4899', light: '#db2777' },
+  plyometrics: { dark: '#a3e635', light: '#65a30d' },
   cardio: { dark: '#2dd4a0', light: '#059669' },
   cycling: { dark: '#38bdf8', light: '#0284c7' },
   swimming: { dark: '#818cf8', light: '#6366f1' },

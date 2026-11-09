@@ -1,6 +1,7 @@
 export type WorkoutCategory =
   | 'strength'
   | 'running'
+  | 'plyometrics'
   | 'cardio'
   | 'cycling'
   | 'swimming'
@@ -41,6 +42,18 @@ export interface CardioDetail {
   avg_heart_rate: number | null;
   max_heart_rate: number | null;
   elevation_m: number | null;
+}
+
+export type SprintVariant = 'acceleration' | 'flying' | 'hill' | 'resisted';
+
+export interface SprintRep {
+  id: string;
+  workout_id: string;
+  rep_number: number;
+  variant: SprintVariant | null;
+  distance_m: number | null;
+  time_sec: number | null;
+  rest_sec: number | null;
 }
 
 export interface WeightEntry {
@@ -116,6 +129,7 @@ export interface MonthlySummary {
 export const CATEGORIES: { id: WorkoutCategory; label: string; icon: string }[] = [
   { id: 'strength', label: 'Strength', icon: '💪' },
   { id: 'running', label: 'Running', icon: '🏃' },
+  { id: 'plyometrics', label: 'Plyo / Sprints', icon: '⚡' },
   { id: 'cardio', label: 'Cardio', icon: '❤️' },
   { id: 'cycling', label: 'Cycling', icon: '🚴' },
   { id: 'swimming', label: 'Swimming', icon: '🏊' },

@@ -3,7 +3,7 @@ import { createClient } from '@supabase/supabase-js';
 import type { WorkoutCategory } from '@/types/database';
 
 const CATEGORIES: WorkoutCategory[] = [
-  'strength', 'running', 'cardio', 'cycling', 'swimming', 'flexibility', 'sport', 'other',
+  'strength', 'running', 'plyometrics', 'cardio', 'cycling', 'swimming', 'flexibility', 'sport', 'other',
 ];
 
 function db() {
@@ -32,7 +32,7 @@ function num(v: unknown): number | null {
   return Number.isFinite(n) ? n : null;
 }
 
-/** POST — log a workout (+ optional strength sets / cardio detail). */
+/** POST — log a workout (+ optional strength sets / cardio detail / sprint reps). */
 export async function POST(req: Request) {
   if (!authed(req)) return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
 
@@ -96,6 +96,25 @@ export async function POST(req: Request) {
     };
     const { error: e3 } = await supabase.from('cardio_details').insert(row);
     if (e3) return NextResponse.json({ error: 'cardio-failed', detail: e3.message, workout: saved }, { status: 500 });
+  }
+
+  // Sprint reps (plyometrics)
+  const rawSprints = Array.isArray(body.sprints) ? body.sprints : [];
+  if (rawSprints.length) {
+    const variants = ['acceleration', 'flying', 'hill', 'resisted'];
+    const rows = rawSprints.map((r: Record<string, unknown>, i: number) => {
+      const rest = num(r.rest_sec);
+      return {
+        workout_id: workoutId,
+        rep_number: num(r.rep_number) ?? i + 1,
+        variant: variants.includes(String(r.variant)) ? String(r.variant) : null,
+        distance_m: num(r.distance_m),
+        time_sec: num(r.time_sec),
+        rest_sec: rest === null ? null : Math.round(rest),
+      };
+    });
+    const { error: e4 } = await supabase.from('sprint_reps').insert(rows);
+    if (e4) return NextResponse.json({ error: 'sprints-failed', detail: e4.message, workout: saved }, { status: 500 });
   }
 
   return NextResponse.json({ ok: true, workout: saved }, { status: 201 });
