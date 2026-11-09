@@ -5,6 +5,7 @@ import type { Workout, StrengthSet, CardioDetail, SprintRep } from '@/types/data
 import { fetchWorkoutWithDetails, deleteWorkout } from '@/lib/api';
 import { fmtDateFull, fmtDuration, fmtPace, fmtSprintTime, sprintKmh, rpeColor } from '@/lib/helpers';
 import { CloseIcon } from './Icons';
+import SprintEstimates from './SprintEstimates';
 
 interface Props {
   workoutId: string;
@@ -124,6 +125,9 @@ export default function WorkoutDetailModal({ workoutId, onClose, onDeleted, onEd
                       ))}
                   </div>
                 )}
+                <div style={{ marginBottom: 8 }}>
+                  <SprintEstimates variant={sprints.find((r) => r.variant)?.variant ?? null} reps={sprints} />
+                </div>
                 <div className="exercise-block">
                   {sprints.map((r) => {
                     const isBest = !!r.distance_m && !!r.time_sec && bestByDistance[String(r.distance_m)] === r.time_sec;

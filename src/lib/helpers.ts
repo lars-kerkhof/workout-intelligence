@@ -71,6 +71,73 @@ export function sprintKmh(distanceM: number | null, timeSec: number | null): str
   return ((distanceM / timeSec) * 3.6).toFixed(1) + ' km/u';
 }
 
+// ─── Sprint → standard-distance estimates ───
+// Reference times (s) for one consistent recreational/club-level athlete,
+// standing start. Any rep is scaled against this curve, so the shape of the
+// speed decay (acceleration phase, then fatigue beyond ~200m) is realistic,
+// unlike a pure power law such as Riegel's formula.
+const SPRINT_REF_CURVE: [number, number][] = [
+  [10, 2.0], [20, 3.3], [30, 4.5], [40, 5.6], [60, 7.8], [100, 12.0],
+  [150, 18.2], [200, 24.5], [300, 39.0], [400, 55.0], [600, 92.0], [800, 130.0],
+];
+
+export const SPRINT_TARGET_DISTANCES = [60, 100, 200, 400, 800];
+
+/** Reference time at any distance in the curve's range (log-log interpolation). */
+function refTime(d: number): number | null {
+  const c = SPRINT_REF_CURVE;
+  if (d < c[0][0] || d > c[c.length - 1][0]) return null;
+  for (let i = 0; i < c.length - 1; i++) {
+    const [d1, t1] = c[i];
+    const [d2, t2] = c[i + 1];
+    if (d >= d1 && d <= d2) {
+      const k = Math.log(t2 / t1) / Math.log(d2 / d1);
+      return t1 * Math.pow(d / d1, k);
+    }
+  }
+  return null;
+}
+
+export interface SprintEstimate {
+  distance: number;
+  time: number;
+  measured: boolean;    // an actual rep at exactly this distance
+  fromDistance: number; // the rep the value is based on
+}
+
+/**
+ * Best (estimated) time at each standard distance, from a set of reps.
+ * A rep at exactly the target distance wins; otherwise the fastest
+ * estimate from any rep (scaled along the reference curve) is used.
+ * Only meaningful for standing-start sprints, so the caller should leave
+ * out flying / hill / resisted reps.
+ */
+export function estimateSprintBests(
+  reps: { distance_m: number | null; time_sec: number | null }[],
+  targets: number[] = SPRINT_TARGET_DISTANCES
+): SprintEstimate[] {
+  const valid = reps.filter((r) => r.distance_m && r.time_sec) as { distance_m: number; time_sec: number }[];
+  const out: SprintEstimate[] = [];
+  for (const target of targets) {
+    const exact = valid.filter((r) => r.distance_m === target);
+    if (exact.length) {
+      out.push({ distance: target, time: Math.min(...exact.map((r) => r.time_sec)), measured: true, fromDistance: target });
+      continue;
+    }
+    const refTarget = refTime(target);
+    if (!refTarget) continue;
+    let best: SprintEstimate | null = null;
+    for (const r of valid) {
+      const refSrc = refTime(r.distance_m);
+      if (!refSrc) continue;
+      const t = r.time_sec * (refTarget / refSrc);
+      if (!best || t < best.time) best = { distance: target, time: t, measured: false, fromDistance: r.distance_m };
+    }
+    if (best) out.push(best);
+  }
+  return out;
+}
+
 // ─── Time formatting (PRs) ──────
 export function fmtTimePR(totalSec: number): string {
   const h = Math.floor(totalSec / 3600);
