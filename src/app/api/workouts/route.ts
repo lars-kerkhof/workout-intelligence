@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
-import type { WorkoutCategory } from '@/types/database';
+import type { WorkoutCategory, SprintVariant } from '@/types/database';
+import { recordSprintPRs } from '@/lib/sprintPRs';
 
 const CATEGORIES: WorkoutCategory[] = [
   'strength', 'running', 'plyometrics', 'cardio', 'cycling', 'swimming', 'flexibility', 'sport', 'other',
@@ -107,7 +108,7 @@ export async function POST(req: Request) {
       return {
         workout_id: workoutId,
         rep_number: num(r.rep_number) ?? i + 1,
-        variant: variants.includes(String(r.variant)) ? String(r.variant) : null,
+        variant: (variants.includes(String(r.variant)) ? String(r.variant) : null) as SprintVariant | null,
         distance_m: num(r.distance_m),
         time_sec: num(r.time_sec),
         rest_sec: rest === null ? null : Math.round(rest),
@@ -115,6 +116,13 @@ export async function POST(req: Request) {
     });
     const { error: e4 } = await supabase.from('sprint_reps').insert(rows);
     if (e4) return NextResponse.json({ error: 'sprints-failed', detail: e4.message, workout: saved }, { status: 500 });
+
+    try {
+      const prs = await recordSprintPRs(supabase, rows, workout.date);
+      return NextResponse.json({ ok: true, workout: saved, sprint_prs: prs }, { status: 201 });
+    } catch (e) {
+      return NextResponse.json({ ok: true, workout: saved, sprint_prs_error: String(e) }, { status: 201 });
+    }
   }
 
   return NextResponse.json({ ok: true, workout: saved }, { status: 201 });

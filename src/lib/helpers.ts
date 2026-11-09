@@ -73,6 +73,8 @@ export function sprintKmh(distanceM: number | null, timeSec: number | null): str
 
 // ─── Time formatting (PRs) ──────
 export function fmtTimePR(totalSec: number): string {
+  // Sprint times carry hundredths (e.g. 7.84s)
+  if (!Number.isInteger(totalSec)) return fmtSprintTime(totalSec);
   const h = Math.floor(totalSec / 3600);
   const m = Math.floor((totalSec % 3600) / 60);
   const s = totalSec % 60;

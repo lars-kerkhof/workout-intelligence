@@ -21,7 +21,7 @@ import {
   getGreeting,
   fmtDateLong,
 } from '@/lib/helpers';
-import { rpeColor, rpeBg, CAT_COLORS } from '@/lib/helpers';
+import { rpeColor, rpeBg, CAT_COLORS, fmtTimePR } from '@/lib/helpers';
 import { chartDefaults, catColor, getChartColors } from '@/lib/charts';
 
 interface DashboardProps {
@@ -430,7 +430,7 @@ function PRCard({ pr }: { pr: PersonalRecord }) {
         <div className="dash-pr-date">{pr.date ? fmtDate(pr.date) : ''}</div>
       </div>
       <div className="dash-pr-value-col">
-        <div className="dash-pr-val" style={{ color: catCol }}>{pr.value} {pr.unit}</div>
+        <div className="dash-pr-val" style={{ color: catCol }}>{pr.unit === 'sec' ? fmtTimePR(pr.value) : `${pr.value} ${pr.unit}`}</div>
         {diff !== null && diff !== 0 && (
           <div className="dash-pr-diff" style={{ color: 'var(--success)' }}>
             {diff > 0 ? '+' : ''}{diff} {pr.unit}

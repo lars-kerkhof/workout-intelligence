@@ -4,7 +4,9 @@ import { useEffect, useState, useCallback } from 'react';
 import type { PersonalRecord, WorkoutCategory } from '@/types/database';
 import { CATEGORIES } from '@/types/database';
 import { fetchPRs, savePR, fetchDistinctExercises } from '@/lib/api';
-import { fmtDate, fmtTimePR, today } from '@/lib/helpers';
+import { fmtDate, fmtTimePR, fmtSprintTime, today } from '@/lib/helpers';
+import { supabase } from '@/lib/supabase';
+import { SPRINT_PR_DISTANCES, fetchSprintAttempts, type SprintAttempt } from '@/lib/sprintPRs';
 
 // ── Strength presets ──
 const STRENGTH_EXERCISES = ['Bench Press', 'Squat', 'Deadlift', 'OHP', 'Barbell Row', 'Pull-ups'];
@@ -33,6 +35,7 @@ export default function PRsView() {
   const [showForm, setShowForm] = useState(false);
   const [activeCat, setActiveCat] = useState<string | null>(null);
   const [exerciseOptions, setExerciseOptions] = useState<string[]>([]);
+  const [attempts, setAttempts] = useState<SprintAttempt[]>([]);
 
   // ── Shared form state ──
   const [prCat, setPrCat] = useState<WorkoutCategory>('strength');
@@ -72,6 +75,7 @@ export default function PRsView() {
   useEffect(() => { load(); }, [load]);
   useEffect(() => {
     fetchDistinctExercises().then(setExerciseOptions);
+    fetchSprintAttempts(supabase).then(setAttempts);
   }, []);
 
   function resetForm() {
@@ -237,6 +241,10 @@ export default function PRsView() {
               </tbody>
             </table>
           </div>
+
+          {activeCat === 'plyometrics' && attempts.length > 0 && (
+            <SprintAttempts attempts={attempts} />
+          )}
         </>
       )}
 
@@ -568,5 +576,36 @@ export default function PRsView() {
         </div>
       )}
     </>
+  );
+}
+
+/* ── Sprint attempts per PR distance ── */
+function SprintAttempts({ attempts }: { attempts: SprintAttempt[] }) {
+  return (
+    <div className="card" style={{ marginTop: 16, display: 'flex', flexDirection: 'column', gap: 12 }}>
+      <h3>Sprintpogingen</h3>
+      {SPRINT_PR_DISTANCES.map((d) => {
+        const list = attempts.filter((a) => a.distance_m === d);
+        if (!list.length) return null;
+        const best = Math.min(...list.map((a) => a.time_sec));
+        return (
+          <div key={d}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 6 }}>
+              <strong>{d}m</strong>
+              <span style={{ fontSize: 12, color: 'var(--fg-dim)' }}>
+                {list.length} {list.length === 1 ? 'poging' : 'pogingen'} · PR <span className="pr-val">{fmtSprintTime(best)}</span>
+              </span>
+            </div>
+            <div className="sprint-best-row">
+              {list.slice(0, 10).map((a) => (
+                <span className="sprint-best" key={a.id} title={fmtDate(a.date)}>
+                  {fmtDate(a.date)} <strong style={a.time_sec === best ? undefined : { color: 'var(--fg)' }}>{fmtSprintTime(a.time_sec)}</strong>
+                </span>
+              ))}
+            </div>
+          </div>
+        );
+      })}
+    </div>
   );
 }

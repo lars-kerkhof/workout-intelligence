@@ -6,6 +6,8 @@ import { CATEGORIES } from '@/types/database';
 import { saveWorkout, updateWorkout, fetchDistinctExercises, fetchDistinctActivities, fetchDistinctLocations } from '@/lib/api';
 import type { Workout, StrengthSet, CardioDetail, SprintRep, SprintVariant } from '@/types/database';
 import { today, fmtSprintTime, sprintKmh } from '@/lib/helpers';
+import { supabase } from '@/lib/supabase';
+import { SPRINT_PR_DISTANCES, fetchSprintBests, recordSprintPRs, variantCountsForPR } from '@/lib/sprintPRs';
 import { CloseIcon, MinusIcon } from './Icons';
 
 export interface EditData {
@@ -79,7 +81,7 @@ const SPRINT_VARIANTS: { id: SprintVariant; label: string; icon: string }[] = [
   { id: 'resisted', label: 'Slee / weerstand', icon: '🛷' },
 ];
 
-const SPRINT_DISTANCES = [10, 20, 30, 40, 60, 100, 150, 200];
+const SPRINT_DISTANCES = [10, 20, 30, 40, 60, 100, 150, 200, 400, 800];
 
 const PLYO_SUGGESTIONS = [
   'Box Jumps', 'Broad Jumps', 'Depth Jumps', 'Drop Jumps', 'Bounds',
@@ -161,6 +163,7 @@ export default function LogWorkoutModal({ onClose, onSaved, editData }: Props) {
   const [interval, setInterval] = useState<IntervalConfig>(DEFAULT_INTERVAL);
 
   // Plyo / Sprint state
+  const [sprintBests, setSprintBests] = useState<Record<number, number>>({});
   const [sprintVariant, setSprintVariant] = useState<SprintVariant>(
     () => editData?.sprints?.find((r) => r.variant)?.variant || 'acceleration'
   );
@@ -183,6 +186,7 @@ export default function LogWorkoutModal({ onClose, onSaved, editData }: Props) {
     fetchDistinctLocations().then(setLocationOptions);
     fetchDistinctExercises().then(setExerciseOptions);
     fetchDistinctActivities().then(setActivityOptions);
+    fetchSprintBests(supabase).then(setSprintBests);
   }, []);
 
   // ── Strength helpers ──
@@ -437,6 +441,14 @@ export default function LogWorkoutModal({ onClose, onSaved, editData }: Props) {
         await updateWorkout(editData.workout.id, workout, strengthSets, cardioDetail ?? null, sprintReps ?? (editData.sprints?.length ? [] : undefined));
       } else {
         await saveWorkout(workout, strengthSets, cardioDetail, sprintReps);
+      }
+      // Sprints at 60/100/200/400/800m: save as PR when faster than the current best.
+      if (sprintReps?.length) {
+        try {
+          await recordSprintPRs(supabase, sprintReps, date);
+        } catch (e) {
+          console.error('Sprint-PR opslaan mislukt', e);
+        }
       }
       onSaved();
     } catch (e) {
@@ -784,6 +796,10 @@ export default function LogWorkoutModal({ onClose, onSaved, editData }: Props) {
                     const d = parseNum(r.distance);
                     const t = parseNum(r.time);
                     const isBest = !!d && !!t && sessionBest[d] === t && sprints.filter((x) => parseNum(x.distance) === d).length > 1;
+                    const isAttempt = !!d && !!t && SPRINT_PR_DISTANCES.includes(d) && variantCountsForPR(sprintVariant);
+                    const prev = d ? sprintBests[d] : undefined;
+                    const isPR = isAttempt && sessionBest[d!] === t
+                      && (prev === undefined || t! < prev || (isEditing && t === prev));
                     return (
                       <div className="sprint-grid" key={i}>
                         <span className="set-num">{i + 1}</span>
@@ -810,7 +826,15 @@ export default function LogWorkoutModal({ onClose, onSaved, editData }: Props) {
                           placeholder="120"
                           onChange={(e) => updateSprint(i, 'rest', e.target.value)}
                         />
-                        <span className="sprint-speed">{sprintKmh(d, t) ?? '–'}</span>
+                        <span className="sprint-speed">
+                          {sprintKmh(d, t) ?? '–'}
+                          {isAttempt && (
+                            <span className={`sprint-pr-tag${isPR ? ' pr' : ''}`}
+                                  title={prev !== undefined ? `Huidig PR: ${fmtSprintTime(prev)}` : 'Nog geen PR op deze afstand'}>
+                              {isPR ? '🏆 PR' : 'poging'}
+                            </span>
+                          )}
+                        </span>
                         <button type="button" className="btn-icon" onClick={() => removeSprint(i)} style={{ padding: 4 }}>
                           <MinusIcon />
                         </button>
